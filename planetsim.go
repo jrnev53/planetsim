@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"strings"
 )
 
 type Position struct {
@@ -131,6 +132,31 @@ func main() {
 	for _, f := range faces {
 		fmt.Println(f.p.name, f.q.name, f.r.name)
 	}
+
+	// find the angles of each face
+	fmt.Println("Found", len(faces), "faces")
+	for _, f := range faces {
+		var angleP string = getAngle(f.p)
+		var angleQ string = getAngle(f.q)
+		var angleR string = getAngle(f.r)
+		fmt.Println(f.p.name, f.q.name, f.r.name, angleP, angleQ, angleR)
+	}
+
+}
+
+func getAngle(position Position) string {
+	var angleXY float64 = math.Atan2(position.y, position.x) / (math.Pi / 180)
+	var angleYZ float64 = math.Atan2(position.z, position.y) / (math.Pi / 180)
+	var angleZX float64 = math.Atan2(position.x, position.z) / (math.Pi / 180)
+	builder := strings.Builder{}
+	builder.WriteString("{")
+	builder.WriteString(fmt.Sprintf("%f", angleXY))
+	builder.WriteString(",")
+	builder.WriteString(fmt.Sprintf("%f", angleYZ))
+	builder.WriteString(",")
+	builder.WriteString(fmt.Sprintf("%f", angleZX))
+	builder.WriteString("}")
+	return builder.String()
 }
 
 // find points that are in both sets
