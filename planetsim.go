@@ -4,22 +4,17 @@ import (
 	"fmt"
 	"math"
 	"strings"
+
+	"github.com/golang/geo/r3"
 )
 
-type Position struct {
-	name string
-	x    float64
-	y    float64
-	z    float64
-}
-
 type Edge struct {
-	from Position
-	to   Position
+	from r3.Vector
+	to   r3.Vector
 }
 
 type Face struct {
-	p, q, r Position
+	p, q, r r3.Vector
 }
 
 func main() {
@@ -32,28 +27,28 @@ func main() {
 	// has 20 faces, 12 vertices, 30 edges
 
 	// define vertices about the origin
-	var vertices = []Position{
-		{x: 0, y: 1, z: golden_ratio},
-		{x: 0, y: -1, z: golden_ratio},
-		{x: 0, y: 1, z: -golden_ratio},
-		{x: 0, y: -1, z: -golden_ratio},
+	var vertices = []r3.Vector{
+		{X: 0, Y: 1, Z: golden_ratio},
+		{X: 0, Y: -1, Z: golden_ratio},
+		{X: 0, Y: 1, Z: -golden_ratio},
+		{X: 0, Y: -1, Z: -golden_ratio},
 
-		{x: 1, y: golden_ratio, z: 0},
-		{x: -1, y: golden_ratio, z: 0},
-		{x: 1, y: -golden_ratio, z: 0},
-		{x: -1, y: -golden_ratio, z: 0},
+		{X: 1, Y: golden_ratio, Z: 0},
+		{X: -1, Y: golden_ratio, Z: 0},
+		{X: 1, Y: -golden_ratio, Z: 0},
+		{X: -1, Y: -golden_ratio, Z: 0},
 
-		{x: golden_ratio, y: 0, z: 1},
-		{x: golden_ratio, y: 0, z: -1},
-		{x: -golden_ratio, y: 0, z: 1},
-		{x: -golden_ratio, y: 0, z: -1},
+		{X: golden_ratio, Y: 0, Z: 1},
+		{X: golden_ratio, Y: 0, Z: -1},
+		{X: -golden_ratio, Y: 0, Z: 1},
+		{X: -golden_ratio, Y: 0, Z: -1},
 	}
 
-	var nameString string = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	// var nameString string = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-	for i := 0; i < len(vertices); i++ {
-		vertices[i].name = nameString[i : i+1]
-	}
+	// for i := 0; i < len(vertices); i++ {
+	// 	vertices[i].name = nameString[i : i+1]
+	// }
 
 	// fmt.Println(vertices)
 
@@ -64,9 +59,9 @@ func main() {
 	// }
 
 	// test comparisons
-	var v1 Position = vertices[3]
-	var v1a Position = vertices[3]
-	var v2 Position = vertices[2]
+	var v1 r3.Vector = vertices[3]
+	var v1a r3.Vector = vertices[3]
+	var v2 r3.Vector = vertices[2]
 
 	fmt.Println("v1 equals v1a?", v1 == v1a)
 	fmt.Println("v1 equals v2?", v1 == v2)
@@ -98,8 +93,8 @@ func main() {
 		// finding edges that share a vertex with this edge
 		fmt.Println("Finding edges linked to", e)
 		// for the edge, find all the other edges that include one of the ends of the edge
-		var fromVerts []Position
-		var toVerts []Position
+		var fromVerts []r3.Vector
+		var toVerts []r3.Vector
 		for _, f := range edges[i+1:] {
 			// do these equilvances work?
 			if e.from == f.from {
@@ -119,7 +114,7 @@ func main() {
 		fmt.Println("fromVerts size", len(fromVerts), "toVerts size", len(toVerts))
 
 		// find the two vertices that shows up in both lists
-		var commonVerts []Position = setIntersection(fromVerts, toVerts)
+		var commonVerts []r3.Vector = setIntersection(fromVerts, toVerts)
 		// could be 0, 1, or 2 faces
 		for _, p := range commonVerts {
 			// define face
@@ -130,8 +125,23 @@ func main() {
 	// fmt.Println(faces)
 	fmt.Println("Found", len(faces), "faces")
 	for _, f := range faces {
-		fmt.Println(f.p.name, f.q.name, f.r.name)
+		fmt.Println(f)
+
+		// verify the length between the vertices in the face
+		distPQ := f.p.Distance(f.q)
+		distQR := f.q.Distance(f.r)
+		distRP := f.r.Distance(f.p)
+		fmt.Println(distPQ, distQR, distRP)
+		if distPQ+distQR+distRP != 6 {
+			panic("something isn't adding up")
+		}
 	}
+
+	// // fmt.Println(faces)
+	// fmt.Println("Found", len(faces), "faces")
+	// for _, f := range faces {
+	// 	fmt.Println(f.p.name, f.q.name, f.r.name)
+	// }
 
 	// find the angles of each face
 	fmt.Println("Found", len(faces), "faces")
@@ -139,29 +149,29 @@ func main() {
 		var angleP string = getAngle(f.p)
 		var angleQ string = getAngle(f.q)
 		var angleR string = getAngle(f.r)
-		fmt.Println(f.p.name, f.q.name, f.r.name, angleP, angleQ, angleR)
+		fmt.Println(angleP, angleQ, angleR)
 	}
 
 }
 
-func getAngle(position Position) string {
-	var angleXY float64 = math.Atan2(position.y, position.x) / (math.Pi / 180)
-	var angleYZ float64 = math.Atan2(position.z, position.y) / (math.Pi / 180)
-	var angleZX float64 = math.Atan2(position.x, position.z) / (math.Pi / 180)
+func getAngle(position r3.Vector) string {
+	var angleXY float64 = math.Atan2(position.Y, position.X) / (math.Pi / 180)
+	var angleYZ float64 = math.Atan2(position.Z, position.Y) / (math.Pi / 180)
+	var angleZX float64 = math.Atan2(position.X, position.Z) / (math.Pi / 180)
 	builder := strings.Builder{}
 	builder.WriteString("{")
-	builder.WriteString(fmt.Sprintf("%f", angleXY))
+	builder.WriteString(fmt.Sprintf("%0.2f", angleXY))
 	builder.WriteString(",")
-	builder.WriteString(fmt.Sprintf("%f", angleYZ))
+	builder.WriteString(fmt.Sprintf("%0.2f", angleYZ))
 	builder.WriteString(",")
-	builder.WriteString(fmt.Sprintf("%f", angleZX))
+	builder.WriteString(fmt.Sprintf("%0.2f", angleZX))
 	builder.WriteString("}")
 	return builder.String()
 }
 
 // find points that are in both sets
-func setIntersection(fromVerts []Position, toVerts []Position) []Position {
-	var ret []Position
+func setIntersection(fromVerts []r3.Vector, toVerts []r3.Vector) []r3.Vector {
+	var ret []r3.Vector
 
 	fmt.Println("setIntersection with", fromVerts, "and", toVerts)
 	for _, fv := range fromVerts {
@@ -179,13 +189,13 @@ func setIntersection(fromVerts []Position, toVerts []Position) []Position {
 	return ret
 }
 
-func distanceMatches(p, q Position, distance float64, closeness float64) bool {
+func distanceMatches(p, q r3.Vector, distance float64, closeness float64) bool {
 	var calcDistance float64
 
 	var xpart, ypart, zpart float64
-	xpart = p.x - q.x
-	ypart = p.y - q.y
-	zpart = p.z - q.z
+	xpart = p.X - q.X
+	ypart = p.Y - q.Y
+	zpart = p.Z - q.Z
 	xpart = math.Pow(xpart, 2)
 	ypart = math.Pow(ypart, 2)
 	zpart = math.Pow(zpart, 2)
@@ -198,6 +208,6 @@ func distanceMatches(p, q Position, distance float64, closeness float64) bool {
 	return difference < closeness
 }
 
-func positionEquals(p, q Position) bool {
-	return p.x == q.x && p.y == q.y && p.z == q.z
+func positionEquals(p, q r3.Vector) bool {
+	return p.X == q.X && p.Y == q.Y && p.Z == q.Z
 }
